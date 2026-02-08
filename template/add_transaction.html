@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Add Transaction</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="background:#f4f6f9;">
+  {% include "navbar.html" %}
+
+  <div class="container" style="max-width:520px; margin-top:40px;">
+    <div class="card p-4 shadow-sm" style="border-radius:15px;">
+      <h3 class="text-center mb-3">Add Transaction</h3>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label">Customer</label>
+          {{ form.customer }}
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Liters</label>
+            {{ form.liters }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Rate (₹ / Liter)</label>
+            {{ form.rate }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Type</label>
+          {{ form.transaction_type }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Note</label>
+          {{ form.note }}
+        </div>
+
+        <button class="btn btn-primary w-100">Save</button>
+      </form>
+
+      <a class="btn btn-link mt-2" href="{% url 'transaction_page' %}">← Back</a>
+    </div>
+  </div>
+
+  <script>
+    // Django auto IDs:
+    const customerSelect = document.getElementById("id_customer");
+    const litersInput = document.getElementById("id_liters");
+    const rateInput = document.getElementById("id_rate");
+
+    async function autofill() {
+      const cid = customerSelect.value;
+      if (!cid) return;
+
+      const res = await fetch(`/api/last-milk/?customer_id=${cid}`);
+      const data = await res.json();
+
+      if (data.ok) {
+        // only fill if empty OR you can always overwrite
+        litersInput.value = data.liters ?? "";
+        rateInput.value = data.rate ?? "";
+      }
+    }
+
+    customerSelect.addEventListener("change", autofill);
+  </script>
+
+</body>
+
+</html>

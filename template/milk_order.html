@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Dairy Orders</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .pimg {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+
+<body>
+
+  {% include "navbar.html" %}
+
+  <div class="container mt-4">
+
+    <div class="card p-3 mb-4">
+      <h4>➕ Add Dairy Order</h4>
+
+      <form method="POST" action="{% url 'milk_order' %}">
+        {% csrf_token %}
+
+        <div class="row g-3">
+
+          <div class="col-md-3">
+            <label class="form-label">Customer</label>
+            <select name="customer" class="form-select" required>
+              <option value="">Select</option>
+              {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Product</label>
+            <select name="product_type" id="productType" class="form-select" required>
+              <option value="MILK">Milk</option>
+              <option value="GHEE">Ghee</option>
+              <option value="PANEER">Paneer</option>
+              <option value="CURD">Curd</option>
+              <option value="BUTTER">Butter</option>
+            </select>
+          </div>
+
+          <!-- MILK BOX -->
+          <div id="milkBox" class="row g-3 mt-0">
+
+            <div class="col-md-3">
+              <label class="form-label">Brand</label>
+              <select name="brand" id="brand" class="form-select">
+                <option value="AMUL">Amul</option>
+                <option value="VIKAS">Vikas</option>
+                <option value="SARASWATI">Saraswati</option>
+                <option value="AMAR">Amar</option>
+              </select>
+            </div>
+
+            <!-- Milk Type -->
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Milk Type</label>
+              <select name="milk_type" class="form-select" required>
+                <option value="">-- Select Milk Type --</option>
+                <option value="COW">Cow Milk</option>
+                <option value="BUFFALO">Buffalo Milk</option>
+              </select>
+            </div>
+
+
+            <div class="col-md-2">
+              <label class="form-label">Pack Size</label>
+              <select name="pack_size" id="packSize" class="form-select">
+                <option value="0.5">0.5 L</option>
+                <option value="1.0">1 L</option>
+                <option value="2.0">2 L</option>
+                <option value="5.0">5 L</option>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Packets</label>
+              <input type="number" name="packets" id="packets" class="form-control" min="1" value="1">
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Rate / Packet</label>
+              <input type="text" id="milkRate" class="form-control" readonly>
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Total</label>
+              <input type="text" id="milkTotal" class="form-control" readonly>
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+              <img id="milkImg" class="pimg" alt="milk">
+            </div>
+
+          </div>
+
+          <!-- OTHER BOX -->
+          <div id="otherBox" class="row g-3 mt-0" style="display:none;">
+            <div class="col-md-3">
+              <label class="form-label">Quantity</label>
+              <input type="number" step="0.1" name="quantity" id="qty" class="form-control" value="1">
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Unit</label>
+              <select name="unit" id="unit" class="form-select">
+                <option value="KG">KG</option>
+                <option value="PCS">PCS</option>
+                <option value="L">L</option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Rate</label>
+              <input type="number" step="0.1" name="rate" id="rate" class="form-control" value="0">
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Total</label>
+              <input type="text" id="otherTotal" class="form-control" readonly>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <!-- <img id="otherImg" class="pimg"> -->
+              <small class="text-muted" id="hint"></small>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <button class="btn btn-success">Add Order</button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+
+    <div class="card p-3">
+      <h4>📋 Orders</h4>
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Brand</th>
+            <th>Pack</th>
+            <th>Packets</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Rate</th>
+            <th>Total Liters</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.date }}</td>
+            <td>{{ o.customer.name }}</td>
+            <td>{{ o.product_type }}</td>
+            <td>{{ o.brand }}</td>
+            <td>{{ o.pack_size }}</td>
+            <td>{{ o.packets }}</td>
+            <td>{{ o.quantity }}</td>
+            <td>{{ o.unit }}</td>
+            <td>{{ o.rate }}</td>
+            <td>{{ o.total_liters }}</td>
+            <td><b>{{ o.total }}</b></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center">No orders</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    const productType = document.getElementById("productType");
+    const milkBox = document.getElementById("milkBox");
+    const otherBox = document.getElementById("otherBox");
+
+    const brand = document.getElementById("brand");
+    const packSize = document.getElementById("packSize");
+    const packets = document.getElementById("packets");
+    const milkRate = document.getElementById("milkRate");
+    const milkTotal = document.getElementById("milkTotal");
+    const milkImg = document.getElementById("milkImg");
+
+    const qty = document.getElementById("qty");
+    const rate = document.getElementById("rate");
+    const otherTotal = document.getElementById("otherTotal");
+    const otherImg = document.getElementById("otherImg");
+    const hint = document.getElementById("hint");
+
+    // Base price for 0.5L (change anytime)
+    const BASE_HALF = {
+      "AMUL": 27,
+      "VIKAS": 26,
+      "SARASWATI": 27,
+      "AMAR": 26
+    };
+
+    const IMG = {
+      "MILK": "https://cdn-icons-png.flaticon.com/512/2674/2674505.png",
+
+    };
+
+    function calcMilk() {
+      const b = brand.value;
+      const size = parseFloat(packSize.value);
+      const pkts = parseInt(packets.value || "0");
+
+      const base = BASE_HALF[b] || 27;
+      const factor = size / 0.5;
+      const ratePerPacket = base * factor;
+      const total = pkts * ratePerPacket;
+
+      milkRate.value = ratePerPacket.toFixed(2);
+      milkTotal.value = total.toFixed(2);
+
+      milkImg.src = IMG["MILK"];
+    }
+
+    function calcOther() {
+      const q = parseFloat(qty.value || "0");
+      const r = parseFloat(rate.value || "0");
+      otherTotal.value = (q * r).toFixed(2);
+
+      const p = productType.value;
+
+    }
+
+    productType.addEventListener("change", () => {
+      if (productType.value === "MILK") {
+        milkBox.style.display = "flex";
+        otherBox.style.display = "none";
+        calcMilk();
+      } else {
+        milkBox.style.display = "none";
+        otherBox.style.display = "flex";
+        calcOther();
+      }
+    });
+
+    brand.addEventListener("change", calcMilk);
+    packSize.addEventListener("change", calcMilk);
+    packets.addEventListener("input", calcMilk);
+
+    qty.addEventListener("input", calcOther);
+    rate.addEventListener("input", calcOther);
+
+    // initial
+    calcMilk();
+  </script>
+
+</body>
+
+</html>
