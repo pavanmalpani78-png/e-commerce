@@ -28,6 +28,10 @@
       <form method="POST" action="{% url 'milk_order' %}">
         {% csrf_token %}
 
+        <input type="hidden" name="rate" id="sendRate">
+        <input type="hidden" name="total" id="sendTotal">
+
+
         <div class="row g-3">
 
           <div class="col-md-3">
@@ -191,6 +195,16 @@
   </div>
 
   <script>
+    function syncHidden() {
+      if (productType.value === "MILK") {
+        document.getElementById("sendRate").value = milkRate.value || "0";
+        document.getElementById("sendTotal").value = milkTotal.value || "0";
+      } else {
+        document.getElementById("sendRate").value = rate.value || "0";
+        document.getElementById("sendTotal").value = otherTotal.value || "0";
+      }
+    }
+
     const productType = document.getElementById("productType");
     const milkBox = document.getElementById("milkBox");
     const otherBox = document.getElementById("otherBox");
@@ -235,6 +249,9 @@
       milkTotal.value = total.toFixed(2);
 
       milkImg.src = IMG["MILK"];
+
+      syncHidden();
+
     }
 
     function calcOther() {

@@ -20,6 +20,12 @@ class MilkOrder(models.Model):
         ("AMAR", "Amar"),
     )
 
+    MILK_TYPES = (
+    ("COW", "Cow Milk"),
+    ("BUFFALO", "Buffalo Milk"),
+    )
+
+
     PACK_SIZES = (
         (Decimal("0.5"), "0.5 L"),
         (Decimal("1.0"), "1 L"),
@@ -42,6 +48,8 @@ class MilkOrder(models.Model):
 
     # Only for Milk
     brand = models.CharField(max_length=20, choices=MILK_BRANDS, blank=True, null=True)
+    milk_type = models.CharField(max_length=10, choices=MILK_TYPES, blank=True, null=True)
+
     pack_size = models.DecimalField(max_digits=3, decimal_places=1, blank=True, null=True)  # 0.5/1/2/5
     packets = models.PositiveIntegerField(default=0)
 

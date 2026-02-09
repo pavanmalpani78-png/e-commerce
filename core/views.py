@@ -34,8 +34,9 @@ def home(request):
 def customer(request):
     return render(request, 'customer.html')
 
-def order(request):
-    return render(request, 'order.html')
+def order_page(request):
+    return render(request, "milk_order.html")  # or order.html if you want, but same page
+
 
 
 
@@ -87,17 +88,24 @@ def milk_order_view(request):
 
     if request.method == "POST":
         customer_id = request.POST.get("customer")
-        milk_type = request.POST.get("milk_type")   # COW / BUFFALO
-        liters = request.POST.get("liters")
-        rate = request.POST.get("rate")
+        product_type = request.POST.get("product_type")
 
-        if customer_id and milk_type and liters and rate:
+        if product_type == "MILK":
             MilkOrder.objects.create(
                 customer_id=int(customer_id),
-                milk_type=milk_type,
-                liters=Decimal(liters),
-                rate=Decimal(rate),
-                total=Decimal(liters) * Decimal(rate)
+                product_type="MILK",
+                brand=request.POST.get("brand"),
+                milk_type=request.POST.get("milk_type"),   # ✅ NOW VALID
+                pack_size=Decimal(request.POST.get("pack_size")),
+                packets=int(request.POST.get("packets")),
+            )
+        else:
+            MilkOrder.objects.create(
+                customer_id=int(customer_id),
+                product_type=product_type,
+                quantity=Decimal(request.POST.get("quantity")),
+                unit=request.POST.get("unit"),
+                rate=Decimal(request.POST.get("rate")),
             )
 
         return redirect("milk_order")

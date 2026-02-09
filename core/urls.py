@@ -11,7 +11,10 @@ urlpatterns = [
 
               
     path('customer/', views.customer, name='customer'),
-    path('order/', views.order, name='order'),
+    
+    # path("order/", views.milk_order_view, name="milk_order"),
+
+
 
     path("milkorder/", views.milk_order_view, name="milk_order"),
     
