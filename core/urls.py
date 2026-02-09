@@ -2,8 +2,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.home, name="home"),
-               # Homepage
+    
+    path("", views.dashboard, name="dashboard"),   # ✅ first page (front)
+    path("login/", views.login_page, name="login"),
+    path("signup/", views.signup_page, name="signup"),
+    path("home/", views.home, name="home"),        # ✅ main home page
+
+
+              
     path('customer/', views.customer, name='customer'),
     path('order/', views.order, name='order'),
 

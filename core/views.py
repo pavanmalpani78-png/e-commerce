@@ -7,9 +7,23 @@ from .forms import CustomerForm, MilkTransactionForm
 
 
 
+from django.shortcuts import render, redirect
+
+def dashboard(request):
+    return render(request, "dashboard.html")   # front page
+
 def home(request):
-    # open milk page as main page
-    return redirect("milk_order")
+    return render(request, "home.html")        # main page
+
+def login_page(request):
+    if request.method == "POST":
+        return redirect("home")                # ✅ after login go home
+    return render(request, "login.html")
+
+def signup_page(request):
+    if request.method == "POST":
+        return redirect("home")                # ✅ after signup go home
+    return render(request, "signup.html")
 
 # hisab_kitab_app/views.py
 from django.shortcuts import render
