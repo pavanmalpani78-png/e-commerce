@@ -1,11 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">🥛 Milk Khata</a>
+    <!-- <a class="navbar-brand fw-bold" href="{% url 'home' %}">🥛 Milk Khata</a> -->
     <div class="navbar-nav">
       <a class="nav-link" href="{% url 'milk_order' %}">Milk Orders</a>
       <a class="nav-link" href="{% url 'customer_page' %}">Customers</a>
-      <a class="nav-link" href="{% url 'transaction_page' %}">Transactions</a>
+      <a class="nav-link" href="{% url 'transaction_page' %}">Payment Status</a>
       <a class="nav-link" href="{% url 'daily_milk_report' %}">Daily Report</a>
+      <a class="nav-link fw-semibold" href="{% url 'bill_select_customer' %}">Bill</a>
+
+
 
     </div>
   </div>

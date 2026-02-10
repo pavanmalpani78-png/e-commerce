@@ -11,12 +11,9 @@ urlpatterns = [
 
               
     path('customer/', views.customer, name='customer'),
-    
-    # path("order/", views.milk_order_view, name="milk_order"),
-
-
-
+ 
     path("milkorder/", views.milk_order_view, name="milk_order"),
+
     
 
 
@@ -27,6 +24,7 @@ urlpatterns = [
 
     path("transactions/", views.transaction_page, name="transaction_page"),
     path("transaction/add/", views.add_transaction, name="add_transaction"),
+    
 
     
     path("transtpage/", views.transaction_page, name="transaction_page"),
@@ -36,6 +34,12 @@ urlpatterns = [
     path("api/last-milk/", views.customer_last_milk, name="customer_last_milk"),
 
     path("report/daily/", views.daily_milk_report, name="daily_milk_report"),
+
+    # ---------- BILL SECTION ----------
+    path("bill/", views.bill_select_customer, name="bill_select_customer"),
+    path("bill/view/<int:customer_id>/", views.bill_view, name="bill_view"),
+    path("bill/pdf/<int:customer_id>/", views.bill_pdf, name="bill_pdf"),
+
 
 
 ]

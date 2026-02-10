@@ -26,10 +26,12 @@
       <h4>➕ Add Dairy Order</h4>
 
       <form method="POST" action="{% url 'milk_order' %}">
+
         {% csrf_token %}
 
-        <input type="hidden" name="rate" id="sendRate">
-        <input type="hidden" name="total" id="sendTotal">
+
+
+
 
 
         <div class="row g-3">
@@ -61,32 +63,37 @@
             <div class="col-md-3">
               <label class="form-label">Brand</label>
               <select name="brand" id="brand" class="form-select">
+                <option value="">-- None --</option>
                 <option value="AMUL">Amul</option>
                 <option value="VIKAS">Vikas</option>
                 <option value="SARASWATI">Saraswati</option>
                 <option value="AMAR">Amar</option>
               </select>
+
             </div>
 
             <!-- Milk Type -->
             <div class="col-md-3 mb-3">
               <label class="form-label">Milk Type</label>
-              <select name="milk_type" class="form-select" required>
-                <option value="">-- Select Milk Type --</option>
+              <select name="milk_type" id="milkType" class="form-select">
+                <option value="">-- None --</option>
                 <option value="COW">Cow Milk</option>
                 <option value="BUFFALO">Buffalo Milk</option>
               </select>
+
             </div>
 
 
             <div class="col-md-2">
               <label class="form-label">Pack Size</label>
-              <select name="pack_size" id="packSize" class="form-select">
+              <select name="pack_size" id="packSize" class="form-select" required>
+                <option value="">-- Select --</option>
                 <option value="0.5">0.5 L</option>
                 <option value="1.0">1 L</option>
                 <option value="2.0">2 L</option>
                 <option value="5.0">5 L</option>
               </select>
+
             </div>
 
             <div class="col-md-2">
@@ -159,6 +166,8 @@
             <th>Customer</th>
             <th>Product</th>
             <th>Brand</th>
+            <th>Milk Type</th>
+
             <th>Pack</th>
             <th>Packets</th>
             <th>Qty</th>
@@ -173,43 +182,40 @@
           <tr>
             <td>{{ o.date }}</td>
             <td>{{ o.customer.name }}</td>
-            <td>{{ o.product_type }}</td>
-            <td>{{ o.brand }}</td>
-            <td>{{ o.pack_size }}</td>
-            <td>{{ o.packets }}</td>
-            <td>{{ o.quantity }}</td>
-            <td>{{ o.unit }}</td>
+            <td>{{ o.get_product_type_display }}</td>
+
+            <td>{{ o.get_brand_display|default:"-" }}</td>
+            <td>{{ o.get_milk_type_display|default:"-" }}</td>
+
+            <td>{{ o.pack_size|default:"-" }}</td>
+            <td>{{ o.packets|default:"-" }}</td>
+
+            <td>{{ o.quantity|default:"-" }}</td>
+            <td>{{ o.unit|default:"-" }}</td>
+
             <td>{{ o.rate }}</td>
             <td>{{ o.total_liters }}</td>
             <td><b>{{ o.total }}</b></td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="11" class="text-center">No orders</td>
+            <td colspan="12" class="text-center">No orders</td>
           </tr>
           {% endfor %}
         </tbody>
+
       </table>
     </div>
 
   </div>
 
   <script>
-    function syncHidden() {
-      if (productType.value === "MILK") {
-        document.getElementById("sendRate").value = milkRate.value || "0";
-        document.getElementById("sendTotal").value = milkTotal.value || "0";
-      } else {
-        document.getElementById("sendRate").value = rate.value || "0";
-        document.getElementById("sendTotal").value = otherTotal.value || "0";
-      }
-    }
-
     const productType = document.getElementById("productType");
     const milkBox = document.getElementById("milkBox");
     const otherBox = document.getElementById("otherBox");
 
     const brand = document.getElementById("brand");
+    const milkType = document.getElementById("milkType");
     const packSize = document.getElementById("packSize");
     const packets = document.getElementById("packets");
     const milkRate = document.getElementById("milkRate");
@@ -217,28 +223,29 @@
     const milkImg = document.getElementById("milkImg");
 
     const qty = document.getElementById("qty");
+    const unit = document.getElementById("unit");
     const rate = document.getElementById("rate");
     const otherTotal = document.getElementById("otherTotal");
-    const otherImg = document.getElementById("otherImg");
-    const hint = document.getElementById("hint");
 
-    // Base price for 0.5L (change anytime)
-    const BASE_HALF = {
-      "AMUL": 27,
-      "VIKAS": 26,
-      "SARASWATI": 27,
-      "AMAR": 26
-    };
+    const BASE_HALF = { AMUL: 27, VIKAS: 26, SARASWATI: 27, AMAR: 26 };
+    const IMG_MILK = "https://cdn-icons-png.flaticon.com/512/2674/2674505.png";
 
-    const IMG = {
-      "MILK": "https://cdn-icons-png.flaticon.com/512/2674/2674505.png",
-
-    };
+    function setEnabled(container, enabled) {
+      container.querySelectorAll("input, select, textarea").forEach(el => {
+        el.disabled = !enabled;
+      });
+    }
 
     function calcMilk() {
       const b = brand.value;
-      const size = parseFloat(packSize.value);
+      const size = parseFloat(packSize.value || "0");
       const pkts = parseInt(packets.value || "0");
+
+      if (!size || !pkts) {
+        milkRate.value = "";
+        milkTotal.value = "";
+        return;
+      }
 
       const base = BASE_HALF[b] || 27;
       const factor = size / 0.5;
@@ -247,33 +254,47 @@
 
       milkRate.value = ratePerPacket.toFixed(2);
       milkTotal.value = total.toFixed(2);
-
-      milkImg.src = IMG["MILK"];
-
-      syncHidden();
-
+      milkImg.src = IMG_MILK;
     }
 
     function calcOther() {
       const q = parseFloat(qty.value || "0");
       const r = parseFloat(rate.value || "0");
       otherTotal.value = (q * r).toFixed(2);
-
-      const p = productType.value;
-
     }
 
-    productType.addEventListener("change", () => {
+    function toggleBoxes() {
       if (productType.value === "MILK") {
         milkBox.style.display = "flex";
         otherBox.style.display = "none";
+
+        setEnabled(milkBox, true);
+        setEnabled(otherBox, false);
+
+        // Only milk requires pack_size + packets
+        packSize.required = true;
+        packets.required = true;
+
         calcMilk();
       } else {
         milkBox.style.display = "none";
         otherBox.style.display = "flex";
+
+        setEnabled(milkBox, false);
+        setEnabled(otherBox, true);
+
+        // Other products require qty + rate
+        packSize.required = false;
+        packets.required = false;
+
+        qty.required = true;
+        rate.required = true;
+
         calcOther();
       }
-    });
+    }
+
+    productType.addEventListener("change", toggleBoxes);
 
     brand.addEventListener("change", calcMilk);
     packSize.addEventListener("change", calcMilk);
@@ -282,8 +303,8 @@
     qty.addEventListener("input", calcOther);
     rate.addEventListener("input", calcOther);
 
-    // initial
-    calcMilk();
+    // init
+    toggleBoxes();
   </script>
 
 </body>

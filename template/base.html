@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Milk Khata{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .page-wrap {
+            max-width: 1050px;
+            margin: 28px auto;
+        }
+
+        .card-pro {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(20, 40, 80, 0.08);
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+            color: white;
+            padding: 22px 24px;
+        }
+
+        .topbar h3 {
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .topbar p {
+            margin: 6px 0 0;
+            opacity: 0.9;
+        }
+
+        .btn-pill {
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 600;
+        }
+
+        .searchbox {
+            border-radius: 12px;
+            padding: 11px 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .table thead th {
+            background: #0b1220 !important;
+            color: #fff !important;
+            border-color: #0b1220 !important;
+        }
+
+        .table tbody tr:hover {
+            background: #f2f6ff;
+            transition: 0.2s;
+        }
+
+        .badge-soft {
+            background: #eef2ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="page-wrap">
+        {% block content %}{% endblock %}
+        <div class="text-center muted small mt-3">
+            © 2026 Milk Khata • Customer Management
+        </div>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

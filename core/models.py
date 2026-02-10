@@ -88,43 +88,65 @@ class MilkOrder(models.Model):
         return base * factor
 
     def save(self, *args, **kwargs):
-        if self.product_type == "MILK":
-            # required: brand, pack_size, packets
-            size = Decimal(str(self.pack_size))
-            pkts = Decimal(str(self.packets))
 
-            self.rate = self.milk_rate_from_base()  # rate per packet
-            self.total_liters = pkts * size
-            self.total = pkts * self.rate
+    # ---------- IF PRODUCT IS MILK ----------
+     if self.product_type == "MILK":
 
-            # clear other fields
-            self.quantity = Decimal("0")
-            self.unit = ""
-        else:
+        # pack_size = 0.5 / 1 / 2 / 5
+        # packets = how many packets
+        size = Decimal(str(self.pack_size))
+        packets = Decimal(str(self.packets))
+
+        # quantity = total liters
+        self.quantity = packets * size
+        self.unit = "L"
+
+        # price chart (half liter)
+        base_half = self.base_price_half_liter(self.brand)
+
+        # convert to per liter price
+        self.rate = base_half / Decimal("0.5")
+
+        # final total
+        self.total = self.quantity * self.rate
+        self.total_liters = self.quantity
+
+    # ---------- IF PRODUCT IS NOT MILK ----------
+     else:
             q = Decimal(str(self.quantity))
             r = Decimal(str(self.rate))
             self.total = q * r
             self.total_liters = Decimal("0")
 
-            # clear milk-only fields
             self.brand = None
+            self.milk_type = None
             self.pack_size = None
             self.packets = 0
 
-        super().save(*args, **kwargs)
+
+     super().save(*args, **kwargs)
 
 
 class MilkTransaction(models.Model):
-    TRANSACTION_TYPES = (
-        ("UDHAR", "Udhar"),
-        ("JAMA", "Jama"),
-    )
+    
+    PAYMENT_STATUS = (
+    ("PAID", "Paid"),
+    ("UNPAID", "Unpaid"),
+)
+
+
+
+ 
+
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     liters = models.DecimalField(max_digits=5, decimal_places=2)
     rate = models.DecimalField(max_digits=6, decimal_places=2)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    # transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    # payment_status = models.CharField(max_length=10,choices=PAYMENT_STATUS,default="UNPAID")
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS)
+
     date = models.DateField(auto_now_add=True)
     note = models.TextField(blank=True, null=True)
 
@@ -133,4 +155,4 @@ class MilkTransaction(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.customer.name} - {self.transaction_type} - {self.amount}"
+     return f"{self.customer.name} - {self.payment_status} - {self.amount}"
