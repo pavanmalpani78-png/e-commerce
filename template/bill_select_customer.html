@@ -2,53 +2,88 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Generate Bill</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            min-height: 100vh;
-            background: radial-gradient(circle at top left, #6dd5ed, #2193b0);
+            background: #f5f7fb;
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+        .page-wrap {
+            max-width: 1050px;
+            margin: 28px auto;
+        }
+
+        .card-pro {
+            border: 0;
             border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 30px rgba(20, 40, 80, 0.08);
+            overflow: hidden;
+            background: #fff;
         }
 
-        .title {
+        .topbar {
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
             color: #fff;
+            padding: 22px 24px;
+        }
+
+        .topbar h3 {
+            margin: 0;
             font-weight: 800;
-            letter-spacing: 0.5px;
+            letter-spacing: .2px;
         }
 
-        .subtitle {
-            color: rgba(255, 255, 255, 0.85);
+        .topbar p {
+            margin: 6px 0 0;
+            opacity: .9;
         }
 
-        .btn-dark {
+        .btn-pill {
             border-radius: 12px;
-            padding: 12px 18px;
+            padding: 10px 14px;
+            font-weight: 600;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .form-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 18px;
+            background: #fff;
         }
 
         .form-select {
             border-radius: 12px;
             padding: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .hint {
+            background: #eef2ff;
+            border: 1px solid #dbeafe;
+            color: #1d4ed8;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 14px;
         }
 
         .badge-soft {
-            background: rgba(255, 255, 255, 0.18);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 999px;
-            padding: 6px 12px;
+            padding: 6px 10px;
+            font-weight: 700;
             font-size: 12px;
+            display: inline-block;
+            background: #eef2ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
         }
     </style>
 </head>
@@ -57,48 +92,69 @@
 
     {% include "navbar.html" %}
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
+    <div class="page-wrap">
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h1 class="title mb-1">Generate Customer Bill</h1>
-                        <div class="subtitle">Select a customer and generate an invoice in one click.</div>
+        <div class="card card-pro">
+
+            <!-- Header -->
+            <div
+                class="topbar d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h3>Generate Bill</h3>
+                    <p>Select a customer and open invoice instantly</p>
+                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                        <span class="badge-soft">Invoice Module</span>
+                        <span class="badge-soft">Customers: {{ customers|length }}</span>
                     </div>
-                    <span class="badge-soft">Invoice Module</span>
                 </div>
 
-                <div class="glass p-4 p-md-5">
-                    <form method="POST" class="mt-2">
-                        {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'home' %}" class="btn btn-light btn-pill">Back to Home</a>
+                </div>
+            </div>
 
-                        <label class="form-label text-white fw-semibold">Select Customer</label>
-                        <select name="customer" class="form-select" required>
-                            <option value="">-- Select Customer --</option>
-                            {% for c in customers %}
-                            <option value="{{ c.id }}">{{ c.name }}</option>
-                            {% endfor %}
-                        </select>
+            <!-- Content -->
+            <div class="p-3 p-md-4">
 
-                        <div class="d-grid mt-4">
-                            <button class="btn btn-dark btn-lg fw-semibold">
-                                Generate Bill
-                            </button>
-                        </div>
-
-                        <div class="mt-3 text-white-50 small">
-                            Tip: After bill opens, click <b>Download PDF</b> and share on WhatsApp/Email.
-                        </div>
-                    </form>
+                <div class="hint mb-3">
+                    Tip: After invoice opens, click <b>Download PDF</b> and share on WhatsApp / Email.
                 </div>
 
-                <div class="text-center mt-4 text-white-50 small">
-                    © 2026 Milk Khata • Billing System
+                <div class="row justify-content-center">
+                    <div class="col-lg-7">
+
+                        <div class="form-card">
+                            <form method="POST">
+                                {% csrf_token %}
+
+                                <label class="form-label fw-semibold">Select Customer</label>
+                                <select name="customer" class="form-select" required>
+                                    <option value="">-- Select Customer --</option>
+                                    {% for c in customers %}
+                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <button class="btn btn-dark btn-pill w-100 mt-3 fw-semibold">
+                                    Generate Bill
+                                </button>
+
+                                <div class="text-center muted small mt-3">
+                                    Bill will open in a new page (Invoice View).
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
                 </div>
 
             </div>
         </div>
+
+        <div class="text-center muted small mt-3">
+            © 2026 Milk Khata • Billing
+        </div>
+
     </div>
 
 </body>

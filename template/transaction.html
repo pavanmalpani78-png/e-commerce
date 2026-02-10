@@ -14,7 +14,7 @@
     }
 
     .page-wrap {
-      max-width: 1050px;
+      max-width: 1100px;
       margin: 28px auto;
     }
 
@@ -126,19 +126,21 @@
           </div>
 
           <input id="searchInput" type="text" class="form-control searchbox"
-            placeholder="Search by customer / date / status...">
+            placeholder="Search by customer / product / status...">
         </div>
 
         <div class="table-responsive">
           <table class="table table-bordered align-middle mb-0" id="paymentTable">
             <thead>
               <tr>
-                <th style="width: 16%;">Date</th>
-                <th style="width: 22%;">Customer</th>
-                <th style="width: 12%;">Liters</th>
+                <th style="width: 12%;">Date</th>
+                <th style="width: 18%;">Customer</th>
+                <th style="width: 12%;">Product</th>
+                <th style="width: 10%;">Qty</th>
+                <th style="width: 10%;">Unit</th>
                 <th style="width: 12%;">Rate</th>
                 <th style="width: 14%;">Total</th>
-                <th style="width: 14%;">Status</th>
+                <th style="width: 12%;">Status</th>
               </tr>
             </thead>
 
@@ -147,7 +149,9 @@
               <tr>
                 <td>{{ t.date }}</td>
                 <td class="fw-semibold">{{ t.customer.name }}</td>
-                <td>{{ t.liters }}</td>
+                <td>{{ t.get_product_type_display|default:t.product_type }}</td>
+                <td>{{ t.qty }}</td>
+                <td>{{ t.unit }}</td>
                 <td>₹{{ t.rate }}</td>
                 <td class="fw-bold">₹{{ t.amount }}</td>
                 <td>
@@ -160,7 +164,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center muted py-4">
+                <td colspan="8" class="text-center muted py-4">
                   No payment records found. Click <b>Add Payment</b> to create the first one.
                 </td>
               </tr>

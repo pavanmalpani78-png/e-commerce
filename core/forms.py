@@ -15,20 +15,23 @@ class CustomerForm(forms.ModelForm):
 #         fields = ["customer", "milk_type", "quantity", "rate"]
 
 
+from django import forms
+from .models import MilkTransaction
+
 class MilkTransactionForm(forms.ModelForm):
     class Meta:
         model = MilkTransaction
-        # fields = ["customer", "liters", "rate", "transaction_type", "note"]
-        # fields = ["customer", "liters", "rate", "payment_status", "note"]
-        fields = ["customer", "liters", "rate", "payment_status", "note"]
+        fields = ["customer", "product_type", "qty", "unit", "rate", "payment_status", "note"]
+
 
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "balance": forms.NumberInput(attrs={"class": "form-control"}),
+            "customer": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "unit": forms.Select(attrs={"class": "form-select"}),
+            "rate": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "payment_status": forms.Select(attrs={"class": "form-select"}),
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
-
 
 
         

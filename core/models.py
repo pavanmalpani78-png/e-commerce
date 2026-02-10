@@ -128,31 +128,39 @@ class MilkOrder(models.Model):
 
 
 class MilkTransaction(models.Model):
-    
+
     PAYMENT_STATUS = (
-    ("PAID", "Paid"),
-    ("UNPAID", "Unpaid"),
-)
+        ("PAID", "Paid"),
+        ("UNPAID", "Unpaid"),
+    )
 
-
-
- 
-
+    UNIT_CHOICES = (
+        ("L", "Liters"),
+        ("KG", "Kilogram"),
+        ("PCS", "Pieces"),
+    )
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    liters = models.DecimalField(max_digits=5, decimal_places=2)
-    rate = models.DecimalField(max_digits=6, decimal_places=2)
-    amount = models.DecimalField(max_digits=8, decimal_places=2)
-    # transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
-    # payment_status = models.CharField(max_length=10,choices=PAYMENT_STATUS,default="UNPAID")
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS)
 
+    product_type = models.CharField(
+        max_length=20,
+        choices=MilkOrder.PRODUCT_TYPES,
+        default="MILK"
+    )
+
+    qty = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default="L")
+
+    rate = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default="UNPAID")
     date = models.DateField(auto_now_add=True)
     note = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        self.amount = Decimal(str(self.liters)) * Decimal(str(self.rate))
+        self.amount = Decimal(str(self.qty)) * Decimal(str(self.rate))
         super().save(*args, **kwargs)
 
     def __str__(self):
-     return f"{self.customer.name} - {self.payment_status} - {self.amount}"
+       return f"{self.customer.name} - {self.payment_status} - {self.amount}"

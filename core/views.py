@@ -153,8 +153,10 @@ def add_transaction(request):
         form = MilkTransactionForm(request.POST)
         if form.is_valid():
             t = form.save(commit=False)
-            # amount auto (liters * rate)
-            t.amount = Decimal(str(t.liters)) * Decimal(str(t.rate))
+
+            # ✅ If your field name is qty (renamed from liters)
+            t.amount = Decimal(str(t.qty)) * Decimal(str(t.rate))
+
             t.save()
             return redirect("transaction_page")
     else:
@@ -196,21 +198,35 @@ from .models import MilkOrder
 def daily_milk_report(request):
     selected_date = request.GET.get("date") or timezone.localdate().isoformat()
 
-    orders = MilkOrder.objects.filter(
-        product_type="MILK",
-        date=selected_date
-    ).select_related("customer").order_by("-id")
+    # ✅ ALL products for that day
+    orders = (
+        MilkOrder.objects
+        .filter(date=selected_date)
+        .select_related("customer")
+        .order_by("-id")
+    )
 
+    # ✅ total amount of all products
     totals = orders.aggregate(
-        total_liters=Sum("total_liters"),
         total_amount=Sum("total"),
+        total_liters=Sum("total_liters"),   # only meaningful for milk
+        total_qty=Sum("quantity"),         # meaningful for other products
+    )
+
+    # ✅ product wise summary
+    product_summary = (
+        orders.values("product_type")
+        .annotate(amount=Sum("total"))
+        .order_by("product_type")
     )
 
     return render(request, "daily_report.html", {
         "selected_date": selected_date,
         "orders": orders,
         "totals": totals,
+        "product_summary": product_summary,
     })
+
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum
@@ -245,16 +261,19 @@ def bill_view(request, customer_id):
     ).order_by("-date", "-id")
 
     totals = orders.aggregate(
-        total_liters=Sum("total_liters"),
-        total_amount=Sum("total")
-    )
+    total_liters=Sum("total_liters"),
+    total_qty=Sum("quantity"),
+    total_amount=Sum("total")
+)
 
     return render(request, "bill_view.html", {
-        "customer": customer,
-        "orders": orders,
-        "total_liters": totals["total_liters"] or 0,
-        "total_amount": totals["total_amount"] or 0,
-    })
+    "customer": customer,
+    "orders": orders,
+    "total_liters": totals["total_liters"] or 0,
+    "total_qty": totals["total_qty"] or 0,
+    "total_amount": totals["total_amount"] or 0,
+})
+
 
 
 # 3️⃣ Bill PDF (download)
