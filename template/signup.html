@@ -3,60 +3,165 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Signup | Milk Khata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup | Digital Dairy</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            background: #f4f6f9;
-            height: 100vh;
+            background: #f5f7fb;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 18px;
         }
 
-        .signup-box {
-            width: 380px;
-            padding: 30px;
+        .wrap {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .cardx {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(20, 40, 80, .08);
+            overflow: hidden;
             background: #fff;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+            color: #fff;
+            padding: 22px 24px;
+        }
+
+        .topbar h3 {
+            margin: 0;
+            font-weight: 900;
+            letter-spacing: .2px;
+        }
+
+        .topbar .sub {
+            opacity: .85;
+            margin-top: 6px;
+            font-size: 14px;
+        }
+
+        .form-control {
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 12px 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .15);
+            border-color: rgba(13, 110, 253, .5);
+        }
+
+        .btn-pill {
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-weight: 800;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, .18);
+            border: 1px solid rgba(255, 255, 255, .28);
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .mini-mark {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #fff;
+            opacity: .9;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="signup-box">
-        <h4 class="text-center mb-4">Signup</h4>
+    <div class="wrap">
+        <div class="cardx">
 
-        <form method="POST">
-            {% csrf_token %}
+            <!-- Header -->
+            <div class="topbar d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div>
+                    <h3>Create Shop Account</h3>
+                    <div class="sub">Register to start using Digital Dairy Shop Panel</div>
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" placeholder="Enter name" required>
+                <div class="brand-badge">
+                    <span class="mini-mark"></span>
+                    Digital Dairy
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" placeholder="Choose username" required>
+            <!-- Content -->
+            <div class="p-4 p-md-4">
+
+                {% if messages %}
+                {% for m in messages %}
+                <div class="alert alert-danger">{{ m }}</div>
+                {% endfor %}
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Choose a username"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Create a password"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Confirm Password</label>
+                        <input type="password" name="confirm_password" class="form-control"
+                            placeholder="Re-enter password" required>
+                    </div>
+
+                    <button class="btn btn-success w-100 btn-pill">Create Account</button>
+
+                    <div class="text-center muted small mt-3">
+                        Tip: Use a strong password (letters + numbers).
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="text-center mb-0">
+                    Already have an account?
+                    <a class="fw-semibold" href="{% url 'login' %}">Login</a>
+                </p>
+
             </div>
+        </div>
 
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control" placeholder="Create password" required>
-            </div>
-
-            <button class="btn btn-success w-100">Signup</button>
-        </form>
-
-        <p class="text-center mt-3 mb-0">
-            Already have an account?
-            <a href="{% url 'login' %}">Login</a>
-
-        </p>
+        <!-- <div class="text-center muted small mt-3">
+            © 2026 Digital Dairy • Shop Panel
+        </div> -->
     </div>
 
 </body>

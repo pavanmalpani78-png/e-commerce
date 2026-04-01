@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Dairy | Place Order</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 0 14px;
+        }
+
+        /* top bar */
+        .navx {
+            background: #fff;
+            border: 1px solid #eef2ff;
+            border-radius: 18px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 24px rgba(20, 40, 80, .06);
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .btn-pill {
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-weight: 700;
+        }
+
+        /* card */
+        .cardx {
+            background: #fff;
+            border: 1px solid #eef2ff;
+            border-radius: 22px;
+            box-shadow: 0 14px 30px rgba(20, 40, 80, .07);
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+            color: #fff;
+            padding: 24px 26px;
+        }
+
+        .topbar h3 {
+            margin: 0;
+            font-weight: 900;
+        }
+
+        .section-title {
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <!-- Top navigation -->
+        <div class="navx d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="brand">
+                <div class="mark"></div>
+                <div>
+                    <div class="fw-bold">Digital Dairy</div>
+                    <div class="muted small">Customer Order Panel</div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'customer_my_orders' %}" class="btn btn-outline-primary btn-pill">My Orders</a>
+                <a href="{% url 'customer_logout' %}" class="btn btn-outline-danger btn-pill">Logout</a>
+            </div>
+        </div>
+
+        <!-- Order card -->
+        <div class="cardx">
+
+            <div class="topbar">
+                <h3>Place Dairy Order</h3>
+                <div class="opacity-75">Customer: <b>{{ customer_name }}</b></div>
+            </div>
+
+            <div class="p-4 p-md-4">
+
+                {% if msg %}
+                <div class="alert alert-success mb-3">{{ msg }}</div>
+                {% endif %}
+
+                <div class="section-title">Order Details</div>
+
+                <form method="POST" action="{% url 'customer_place_order' %}">
+                    {% csrf_token %}
+
+                    <div class="row g-3">
+
+                        <!-- Product -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Product</label>
+                            <select name="product_type" id="productType" class="form-select" required>
+                                <option value="MILK">Milk</option>
+                                <option value="GHEE">Ghee</option>
+                                <option value="PANEER">Paneer</option>
+                                <option value="CURD">Curd</option>
+                                <option value="BUTTER">Butter</option>
+                            </select>
+                        </div>
+
+                        <!-- ===== MILK BOX ===== -->
+                        <div id="milkBox" class="row g-3 mt-0">
+
+                            <div class="col-md-4">
+                                <label class="form-label">Brand</label>
+                                <select name="brand" id="brand" class="form-select">
+                                    <option value="">-- None --</option>
+                                    <option value="AMUL">Amul</option>
+                                    <option value="VIKAS">Vikas</option>
+                                    <option value="SARASWATI">Saraswati</option>
+                                    <option value="AMAR">Amar</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Milk Type</label>
+                                <select name="milk_type" id="milkType" class="form-select">
+                                    <option value="">-- None --</option>
+                                    <option value="COW">Cow Milk</option>
+                                    <option value="BUFFALO">Buffalo Milk</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Pack Size</label>
+                                <select name="pack_size" id="packSize" class="form-select" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="0.5">0.5 L</option>
+                                    <option value="1.0">1 L</option>
+                                    <option value="2.0">2 L</option>
+                                    <option value="5.0">5 L</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Packets</label>
+                                <input type="number" name="packets" id="packets" class="form-control" min="1" value="1">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Rate / Packet</label>
+                                <input type="text" id="milkRate" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Total</label>
+                                <input type="text" id="milkTotal" class="form-control" readonly>
+                            </div>
+
+                            <input type="hidden" name="rate" id="milkRateHidden">
+                            <input type="hidden" name="quantity" id="milkQtyHidden">
+                            <input type="hidden" name="unit" value="L">
+                        </div>
+
+                        <!-- ===== OTHER BOX ===== -->
+                        <!-- ===== OTHER BOX ===== -->
+                        <div id="otherBox" class="row g-3 mt-0" style="display:none;">
+
+                            <div class="col-md-4">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" step="0.01" name="quantity" id="qty" class="form-control"
+                                    value="1">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Unit</label>
+                                <select name="unit" id="unit" class="form-select">
+                                    <option value="KG">KG</option>
+                                    <option value="PCS">PCS</option>
+                                    <option value="L">L</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Rate</label>
+                                <input type="number" step="0.01" name="rate" id="rate" class="form-control" value="0"
+                                    required>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Total</label>
+                                <input type="text" id="otherTotal" class="form-control" readonly>
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- <div class="col-md-3">
+                                <label class="form-label">Rate</label>
+                                <input type="number" step="0.01" name="rate" id="rate" class="form-control" value="0">
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Total</label>
+                                <input type="text" id="otherTotal" class="form-control" readonly>
+                            </div> -->
+                        <!-- </div> -->
+
+                        <div class="col-12 mt-3">
+                            <button class="btn btn-success btn-lg btn-pill w-100">
+                                Submit Order
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const productType = document.getElementById("productType");
+        const milkBox = document.getElementById("milkBox");
+        const otherBox = document.getElementById("otherBox");
+
+        const brand = document.getElementById("brand");
+        const packSize = document.getElementById("packSize");
+        const packets = document.getElementById("packets");
+
+        const milkRate = document.getElementById("milkRate");
+        const milkTotal = document.getElementById("milkTotal");
+        const milkRateHidden = document.getElementById("milkRateHidden");
+        const milkQtyHidden = document.getElementById("milkQtyHidden");
+
+        const qty = document.getElementById("qty");
+        const unit = document.getElementById("unit");
+        const rate = document.getElementById("rate");
+        const otherTotal = document.getElementById("otherTotal");
+
+        const BASE_HALF = { AMUL: 27, VIKAS: 26, SARASWATI: 27, AMAR: 26 };
+
+        function setEnabled(container, enabled) {
+            container.querySelectorAll("input, select, textarea").forEach(el => {
+                el.disabled = !enabled;
+            });
+        }
+
+        function calcMilk() {
+            const b = brand.value;
+            const size = parseFloat(packSize.value || "0");
+            const pkts = parseInt(packets.value || "0");
+
+            if (!size || !pkts) {
+                milkRate.value = "";
+                milkTotal.value = "";
+                milkRateHidden.value = "";
+                milkQtyHidden.value = "";
+                return;
+            }
+
+            const base = BASE_HALF[b] || 27;
+            const factor = size / 0.5;
+            const ratePerPacket = base * factor;
+            const total = pkts * ratePerPacket;
+            const liters = pkts * size;
+
+            milkRate.value = ratePerPacket.toFixed(2);
+            milkTotal.value = total.toFixed(2);
+
+            // values that will be saved
+            milkRateHidden.value = ratePerPacket.toFixed(2);
+            milkQtyHidden.value = liters.toFixed(2);
+        }
+
+        function calcOther() {
+            const q = parseFloat(qty.value || "0");
+            const r = parseFloat(rate.value || "0");
+            otherTotal.value = (q * r).toFixed(2);
+        }
+
+        function toggleBoxes() {
+            if (productType.value === "MILK") {
+                milkBox.style.display = "flex";
+                otherBox.style.display = "none";
+
+                setEnabled(milkBox, true);
+                setEnabled(otherBox, false);
+
+                // milk required
+                packSize.required = true;
+                packets.required = true;
+
+                // other not required
+                qty.required = false;
+                rate.required = false;
+
+                calcMilk();
+            } else {
+                milkBox.style.display = "none";
+                otherBox.style.display = "flex";
+
+                setEnabled(milkBox, false);
+                setEnabled(otherBox, true);
+
+                // other required
+                qty.required = true;
+                rate.required = true;
+
+                // milk not required
+                packSize.required = false;
+                packets.required = false;
+
+                calcOther();
+            }
+        }
+
+        productType.addEventListener("change", toggleBoxes);
+
+        brand.addEventListener("change", calcMilk);
+        packSize.addEventListener("change", calcMilk);
+        packets.addEventListener("input", calcMilk);
+
+        qty.addEventListener("input", calcOther);
+        rate.addEventListener("input", calcOther);
+
+        toggleBoxes();
+    </script>
+
+
+
+</body>
+
+</html>

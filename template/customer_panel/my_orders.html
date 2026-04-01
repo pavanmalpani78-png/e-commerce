@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Dairy | My Orders</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 0 14px;
+        }
+
+        /* top navigation */
+        .navx {
+            background: #fff;
+            border: 1px solid #eef2ff;
+            border-radius: 18px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 24px rgba(20, 40, 80, .06);
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .btn-pill {
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-weight: 700;
+        }
+
+        /* card */
+        .cardx {
+            background: #fff;
+            border: 1px solid #eef2ff;
+            border-radius: 22px;
+            box-shadow: 0 14px 30px rgba(20, 40, 80, .07);
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0d6efd, #2193b0);
+            color: #fff;
+            padding: 24px 26px;
+        }
+
+        .topbar h3 {
+            margin: 0;
+            font-weight: 900;
+        }
+
+        .table thead th {
+            background: #0b1220 !important;
+            color: #fff !important;
+            border-color: #0b1220 !important;
+            white-space: nowrap;
+        }
+
+        .table tbody tr:hover {
+            background: #f2f6ff;
+            transition: .2s;
+        }
+
+        .chip {
+            display: inline-block;
+            background: #eef2ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .badge-soft {
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-weight: 800;
+            font-size: 12px;
+            display: inline-block;
+            border: 1px solid transparent;
+            letter-spacing: .3px;
+        }
+
+        .b-pending {
+            background: #fff7ed;
+            color: #9a3412;
+            border-color: #fed7aa;
+        }
+
+        .b-approved {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        .b-rejected {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .money {
+            font-weight: 900;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <!-- Top navigation -->
+        <div class="navx d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="brand">
+                <div class="mark"></div>
+                <div>
+                    <div class="fw-bold">Digital Dairy</div>
+                    <div class="muted small">Customer Order Panel</div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="/c/order/" class="btn btn-outline-success btn-pill">Place Order</a>
+                <a href="/c/logout/" class="btn btn-outline-danger btn-pill">Logout</a>
+            </div>
+        </div>
+
+        <!-- Main card -->
+        <div class="cardx">
+            <div
+                class="topbar d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                <div>
+                    <h3>My Orders</h3>
+                    <div class="opacity-75">All orders you placed</div>
+                </div>
+                <span class="chip">Total: {{ orders|length }}</span>
+            </div>
+
+            <div class="p-3 p-md-4">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:12%">Date</th>
+                                <th style="width:12%">Product</th>
+                                <th style="width:12%">Brand</th>
+                                <th style="width:10%">Pack</th>
+                                <th style="width:8%">Pkts</th>
+                                <th>Quantity</th>
+                                <th style="width:12%">Total</th>
+                                <th style="width:12%">Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for o in orders %}
+                            <tr>
+                                <td>{{ o.date }}</td>
+
+                                <td class="fw-semibold">
+                                    {{ o.get_product_type_display|default:o.product_type }}
+                                </td>
+
+                                <td>{{ o.get_brand_display|default:o.brand|default:"-" }}</td>
+
+                                <td>{{ o.pack_size|default:"-" }}</td>
+                                <td>{{ o.packets|default:"-" }}</td>
+
+                                <td>
+                                    {% if o.product_type == "MILK" %}
+                                    {{ o.total_liters }} L
+                                    {% else %}
+                                    {{ o.quantity }} {{ o.unit }}
+                                    {% endif %}
+                                </td>
+
+                                <td class="money">₹ {{ o.total }}</td>
+
+                                <td>
+                                    {% if o.status == "PENDING" %}
+                                    <span class="badge-soft b-pending">PENDING</span>
+                                    {% elif o.status == "APPROVED" %}
+                                    <span class="badge-soft b-approved">APPROVED</span>
+                                    {% elif o.status == "REJECTED" %}
+                                    <span class="badge-soft b-rejected">REJECTED</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ o.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center muted py-4">
+                                    No orders found. Click <b>Place Order</b> to create your first order.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <div class="text-center muted small mt-3">
+                    © 2026 Digital Dairy • Customer Orders
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

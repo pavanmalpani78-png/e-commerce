@@ -1,50 +1,48 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Sum
+from decimal import Decimal, InvalidOperation
+from django.contrib import messages
+
 from .models import Customer, MilkOrder, MilkTransaction
-# from .forms import CustomerForm, MilkTransactionForm
-from decimal import Decimal
 from .forms import CustomerForm, MilkTransactionForm
 
+def D(x, default="0"):
+    try:
+        if x is None:
+            return Decimal(default)
+        x = str(x).strip()
+        if x == "":
+            return Decimal(default)
+        return Decimal(x)
+    except (InvalidOperation, ValueError):
+        return Decimal(default)
 
-
-
-from django.shortcuts import render, redirect
-
+# ---------- BASIC PAGES ----------
 def dashboard(request):
-    return render(request, "dashboard.html")   # front page
+    return render(request, "dashboard.html")
 
 def home(request):
-    return render(request, "home.html")        # main page
+    return render(request, "home.html")
 
 def login_page(request):
     if request.method == "POST":
-        return redirect("home")                # ✅ after login go home
+        return redirect("home")
     return render(request, "login.html")
 
 def signup_page(request):
     if request.method == "POST":
-        return redirect("home")                # ✅ after signup go home
+        return redirect("home")
     return render(request, "signup.html")
 
-# hisab_kitab_app/views.py
-from django.shortcuts import render
+def terms_page(request):
+    return render(request, "terms.html")
 
-def home(request):
-    return render(request, 'home.html')
-
-def customer(request):
-    return render(request, 'customer.html')
-
-def order_page(request):
-    return render(request, "milk_order.html")  # or order.html if you want, but same page
-
-
-
-
-# ---------------- CUSTOMER ----------------
+# ---------- CUSTOMER CRUD (SHOPKEEPER) ----------
 def customer_page(request):
     customers = Customer.objects.all()
     return render(request, "customer.html", {"customers": customers})
-
 
 def add_customer(request):
     if request.method == "POST":
@@ -56,119 +54,129 @@ def add_customer(request):
         form = CustomerForm()
     return render(request, "add_customer.html", {"form": form})
 
-
 def edit_customer(request, id):
     customer = get_object_or_404(Customer, id=id)
     if request.method == "POST":
         customer.name = request.POST.get("name")
         customer.phone = request.POST.get("phone")
         customer.address = request.POST.get("address")
-        customer.balance = request.POST.get("balance")
+        customer.balance = request.POST.get("balance") or 0
         customer.save()
         return redirect("customer_page")
     return render(request, "edit_customer.html", {"customer": customer})
-
 
 def delete_customer(request, id):
     customer = get_object_or_404(Customer, id=id)
     customer.delete()
     return redirect("customer_page")
 
+# ---------- MILK ORDER (SHOPKEEPER) ----------
+def milk_order(request):
+    customers = Customer.objects.all().order_by("name")
 
-
-
-# ---------------- MILK ORDERS (MilkOrder model) ----------------
-from decimal import Decimal
-from django.shortcuts import render, redirect
-from .models import Customer, MilkOrder
-
-def milk_order_view(request):
-    customers = Customer.objects.all()
-    orders = MilkOrder.objects.select_related("customer").order_by("-date", "-id")
+    selected_date = request.GET.get("date")
+    if selected_date:
+        orders = MilkOrder.objects.filter(date=selected_date).order_by("-id")
+    else:
+        selected_date = timezone.localdate().isoformat()
+        orders = MilkOrder.objects.filter(date=selected_date).order_by("-id")
 
     if request.method == "POST":
         customer_id = request.POST.get("customer")
         product_type = request.POST.get("product_type")
 
-        if not customer_id or not product_type:
-            return redirect("milk_order")
+        date_str = request.POST.get("date") or selected_date
 
-        if product_type == "MILK":
-            brand = request.POST.get("brand")
-            milk_type = request.POST.get("milk_type")
-            pack_size = request.POST.get("pack_size")
-            packets = request.POST.get("packets")
+        brand = request.POST.get("brand") or None
+        milk_type = request.POST.get("milk_type") or None
+        pack_size = request.POST.get("pack_size") or None
+        packets = request.POST.get("packets") or 0
 
-            MilkOrder.objects.create(
-                customer_id=int(customer_id),
-                product_type="MILK",
-                brand=brand,
-                milk_type=milk_type,
-                pack_size=Decimal(str(pack_size)),
-                packets=int(packets),
-                quantity=Decimal("0"),
-                unit="",
-            )
+        quantity = request.POST.get("quantity") or 0
+        unit = request.POST.get("unit") or ""
+        rate = request.POST.get("rate") or 0
 
-        else:
-            quantity = request.POST.get("quantity")
-            unit = request.POST.get("unit")
-            rate = request.POST.get("rate")
-
-            MilkOrder.objects.create(
-                customer_id=int(customer_id),
-                product_type=product_type,
-                quantity=Decimal(str(quantity)),
-                unit=unit,
-                rate=Decimal(str(rate)),
-                brand=None,
-                milk_type=None,
-                pack_size=None,
-                packets=0,
-            )
-
-        return redirect("milk_order")
+        obj = MilkOrder(
+            customer_id=customer_id,
+            product_type=product_type,
+            date=date_str,
+            brand=brand,
+            milk_type=milk_type,
+            pack_size=pack_size,
+            packets=packets,
+            quantity=quantity,
+            unit=unit,
+            rate=rate,
+            placed_by="SHOPKEEPER",
+            status="APPROVED",
+        )
+        obj.save()
+        return redirect(f"/milkorder/?date={date_str}")
 
     return render(request, "milk_order.html", {
         "customers": customers,
         "orders": orders,
+        "selected_date": selected_date,
     })
 
+def edit_order(request, pk):
+    order = get_object_or_404(MilkOrder, pk=pk)
+    customers = Customer.objects.all().order_by("name")
 
-# ---------------- MILK TRANSACTIONS (MilkTransaction model) ----------------
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from decimal import Decimal
-from .models import MilkTransaction, MilkOrder
-from .forms import MilkTransactionForm
+    if request.method == "POST":
+        order.customer_id = request.POST.get("customer")
+        order.product_type = request.POST.get("product_type")
+        order.date = request.POST.get("date") or order.date
 
+        if order.product_type == "MILK":
+            order.brand = request.POST.get("brand") or None
+            order.milk_type = request.POST.get("milk_type") or None
+            order.pack_size = request.POST.get("pack_size") or None
+            order.packets = int(request.POST.get("packets") or 0)
 
+            order.quantity = Decimal("0")
+            order.unit = ""
+            order.rate = Decimal("0")
+        else:
+            order.quantity = D(request.POST.get("quantity"), "0")
+            order.unit = request.POST.get("unit") or "KG"
+            order.rate = D(request.POST.get("rate"), "0")
+
+            order.brand = None
+            order.milk_type = None
+            order.pack_size = None
+            order.packets = 0
+
+        order.save()
+        return redirect(f"/milkorder/?date={order.date}")
+
+    return render(request, "edit_order.html", {"order": order, "customers": customers})
+
+def delete_order(request, pk):
+    order = get_object_or_404(MilkOrder, pk=pk)
+    d = order.date
+    order.delete()
+    return redirect(f"/milkorder/?date={d}")
+
+# ---------- TRANSACTIONS ----------
 def transaction_page(request):
     transactions = MilkTransaction.objects.select_related("customer").order_by("-date", "-id")
     return render(request, "transaction.html", {"transactions": transactions})
-
 
 def add_transaction(request):
     if request.method == "POST":
         form = MilkTransactionForm(request.POST)
         if form.is_valid():
             t = form.save(commit=False)
-
-            # ✅ If your field name is qty (renamed from liters)
-            t.amount = Decimal(str(t.qty)) * Decimal(str(t.rate))
-
+            t.amount = D(t.qty, "0") * D(t.rate, "0")
             t.save()
             return redirect("transaction_page")
     else:
         form = MilkTransactionForm()
-
     return render(request, "add_transaction.html", {"form": form})
 
-
+# API auto-fill
 def customer_last_milk(request):
-    """
-    When user selects customer, this API returns latest milk order liters + rate
-    """
     customer_id = request.GET.get("customer_id")
     if not customer_id:
         return JsonResponse({"ok": False, "liters": 0, "rate": 0})
@@ -183,22 +191,12 @@ def customer_last_milk(request):
         return JsonResponse({"ok": True, "liters": 0, "rate": 0})
 
     rate_per_liter = Decimal(str(order.total)) / Decimal(str(order.total_liters))
+    return JsonResponse({"ok": True, "liters": float(order.total_liters), "rate": float(rate_per_liter)})
 
-    return JsonResponse({
-        "ok": True,
-        "liters": float(order.total_liters),
-        "rate": float(rate_per_liter),
-    })
-
-from django.db.models import Sum
-from django.utils import timezone
-from django.shortcuts import render
-from .models import MilkOrder
-
+# ---------- DAILY REPORT ----------
 def daily_milk_report(request):
     selected_date = request.GET.get("date") or timezone.localdate().isoformat()
 
-    # ✅ ALL products for that day
     orders = (
         MilkOrder.objects
         .filter(date=selected_date)
@@ -206,14 +204,12 @@ def daily_milk_report(request):
         .order_by("-id")
     )
 
-    # ✅ total amount of all products
     totals = orders.aggregate(
         total_amount=Sum("total"),
-        total_liters=Sum("total_liters"),   # only meaningful for milk
-        total_qty=Sum("quantity"),         # meaningful for other products
+        total_liters=Sum("total_liters"),
+        total_qty=Sum("quantity"),
     )
 
-    # ✅ product wise summary
     product_summary = (
         orders.values("product_type")
         .annotate(amount=Sum("total"))
@@ -227,14 +223,18 @@ def daily_milk_report(request):
         "product_summary": product_summary,
     })
 
-
+# ---------- BILL (HTML + PDF) ----------
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum
 from django.http import HttpResponse
+from django.db.models import Sum
 from django.utils import timezone
+from django.conf import settings
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+
+import os
 
 from .models import Customer, MilkOrder
 
@@ -256,42 +256,24 @@ def bill_select_customer(request):
 def bill_view(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
 
-    orders = MilkOrder.objects.filter(
-        customer=customer
-    ).order_by("-date", "-id")
+    orders = MilkOrder.objects.filter(customer=customer).order_by("-date", "-id")
 
     totals = orders.aggregate(
-    total_liters=Sum("total_liters"),
-    total_qty=Sum("quantity"),
-    total_amount=Sum("total")
-)
+        total_liters=Sum("total_liters"),
+        total_qty=Sum("quantity"),
+        total_amount=Sum("total"),
+    )
 
     return render(request, "bill_view.html", {
-    "customer": customer,
-    "orders": orders,
-    "total_liters": totals["total_liters"] or 0,
-    "total_qty": totals["total_qty"] or 0,
-    "total_amount": totals["total_amount"] or 0,
-})
-
+        "customer": customer,
+        "orders": orders,
+        "total_liters": totals["total_liters"] or 0,
+        "total_qty": totals["total_qty"] or 0,
+        "total_amount": totals["total_amount"] or 0,
+    })
 
 
 # 3️⃣ Bill PDF (download)
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.db.models import Sum
-from django.utils import timezone
-from django.conf import settings
-
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-
-import os
-
-from .models import Customer, MilkOrder
-
-
 def bill_pdf(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
 
@@ -318,7 +300,6 @@ def bill_pdf(request, customer_id):
     c = canvas.Canvas(response, pagesize=A4)
     width, height = A4
 
-    # ---------- Helpers ----------
     def money(x):
         try:
             return f"₹ {float(x):.2f}"
@@ -326,13 +307,10 @@ def bill_pdf(request, customer_id):
             return f"₹ {x}"
 
     # ---------- Header ----------
-    y = height - 40
-
-    # Header background bar
-    c.setFillColorRGB(0.06, 0.25, 0.55)  # deep blue
+    c.setFillColorRGB(0.06, 0.25, 0.55)
     c.rect(0, height - 95, width, 95, stroke=0, fill=1)
 
-    # Logo (optional)
+    # optional logo
     logo_path = os.path.join(settings.BASE_DIR, "core", "static", "core", "logo.png")
     if os.path.exists(logo_path):
         try:
@@ -340,7 +318,6 @@ def bill_pdf(request, customer_id):
         except Exception:
             pass
 
-    # Title
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 18)
     c.drawString(110, height - 55, "MILK KHATA - INVOICE")
@@ -348,19 +325,15 @@ def bill_pdf(request, customer_id):
     c.setFont("Helvetica", 10)
     c.drawString(110, height - 73, "Dairy Orders Billing System")
 
-    # Invoice meta (right)
     c.setFont("Helvetica-Bold", 10)
     c.drawRightString(width - 40, height - 55, f"Invoice No: {invoice_no}")
     c.setFont("Helvetica", 10)
     c.drawRightString(width - 40, height - 72, f"Date: {today}")
 
-    # Reset fill
     c.setFillColor(colors.black)
 
-    # ---------- Shop + Customer Box ----------
+    # ---------- Shop + Customer ----------
     y = height - 125
-
-    # Box border
     c.setStrokeColor(colors.lightgrey)
     c.setFillColorRGB(0.97, 0.98, 1.0)
     c.rect(35, y - 90, width - 70, 90, stroke=1, fill=1)
@@ -381,7 +354,7 @@ def bill_pdf(request, customer_id):
 
     y = y - 115
 
-    # ---------- Table Header ----------
+    # ---------- Table ----------
     table_left = 35
     table_right = width - 35
     row_h = 18
@@ -396,7 +369,6 @@ def bill_pdf(request, customer_id):
         ("Total", 70),
     ]
 
-    # Header background
     c.setFillColorRGB(0.1, 0.1, 0.1)
     c.rect(table_left, y, table_right - table_left, row_h + 6, stroke=0, fill=1)
     c.setFillColor(colors.white)
@@ -409,22 +381,18 @@ def bill_pdf(request, customer_id):
 
     y -= (row_h + 6)
 
-    # ---------- Rows ----------
     c.setFont("Helvetica", 9)
     c.setFillColor(colors.black)
-    c.setStrokeColor(colors.lightgrey)
 
     def new_page():
         nonlocal y
         c.showPage()
-        # re-draw a simpler header on new page
         c.setFont("Helvetica-Bold", 14)
         c.drawString(35, height - 40, "MILK KHATA - INVOICE")
         c.setFont("Helvetica", 10)
         c.drawString(35, height - 55, f"Customer: {customer.name}    Invoice: {invoice_no}    Date: {today}")
         y = height - 90
 
-        # table header again
         c.setFillColorRGB(0.1, 0.1, 0.1)
         c.rect(table_left, y, table_right - table_left, row_h + 6, stroke=0, fill=1)
         c.setFillColor(colors.white)
@@ -442,7 +410,6 @@ def bill_pdf(request, customer_id):
         if y < 140:
             new_page()
 
-        # alternate row background
         if alt:
             c.setFillColorRGB(0.98, 0.99, 1.0)
             c.rect(table_left, y, table_right - table_left, row_h, stroke=0, fill=1)
@@ -458,12 +425,9 @@ def bill_pdf(request, customer_id):
         c.drawString(x, y + 4, str(o.total_liters or 0)); x += columns[5][1]
         c.drawString(x, y + 4, money(o.total or 0)); x += columns[6][1]
 
-        # row bottom line
-        c.setStrokeColor(colors.whitesmoke)
-        c.line(table_left, y, table_right, y)
         y -= row_h
 
-    # ---------- Totals Box ----------
+    # ---------- Totals ----------
     y -= 10
     if y < 120:
         new_page()
@@ -477,19 +441,102 @@ def bill_pdf(request, customer_id):
     c.drawString(width - 230, y - 20, f"Total Liters: {total_liters}")
     c.drawString(width - 230, y - 40, f"Grand Total: {money(grand_total)}")
 
-    # ---------- Footer / Signature ----------
-    y -= 85
-    c.setFont("Helvetica", 9)
-    c.setFillColor(colors.grey)
-    c.drawString(35, y, "Note: This is a system-generated invoice. Download and share via WhatsApp/Email.")
-    y -= 25
-
-    c.setFillColor(colors.black)
-    c.setFont("Helvetica", 10)
-    c.drawRightString(width - 40, y, "Authorized Signature")
-    c.setStrokeColor(colors.black)
-    c.line(width - 180, y - 5, width - 40, y - 5)
-
     c.showPage()
     c.save()
     return response
+
+# ---------- CUSTOMER PANEL ----------
+def customer_home(request):
+    return render(request, "customer_panel/home.html")
+
+def customer_login(request):
+    if request.method == "POST":
+        phone = (request.POST.get("phone") or "").strip()
+        password = (request.POST.get("password") or "").strip()
+
+        customer = Customer.objects.filter(login_phone=phone, login_password=password).first()
+        if not customer:
+            messages.error(request, "Invalid phone or password")
+            return redirect("customer_login")
+
+        request.session["customer_id"] = customer.id
+        request.session["customer_name"] = customer.name
+        return redirect("customer_place_order")
+
+    return render(request, "customer_panel/login.html")
+
+def customer_logout(request):
+    request.session.pop("customer_id", None)
+    request.session.pop("customer_name", None)
+    return redirect("customer_home")
+
+def customer_order_success(request):
+    return render(request, "customer_panel/order_success.html")
+
+def customer_place_order(request):
+    customer_id = request.session.get("customer_id")
+    if not customer_id:
+        return redirect("customer_login")
+
+    if request.method == "POST":
+        product_type = request.POST.get("product_type")
+
+        brand = request.POST.get("brand") or None
+        milk_type = request.POST.get("milk_type") or None
+        pack_size = request.POST.get("pack_size") or None
+        packets = request.POST.get("packets") or 0
+
+        quantity = D(request.POST.get("quantity"), "0")
+        unit = (request.POST.get("unit") or "").strip()
+        rate = D(request.POST.get("rate"), "0")
+
+        # Safety: other products must have rate, if missing then 0 remains
+        if product_type != "MILK" and rate == 0:
+            # you can show message, but still allow (your choice)
+            pass
+
+        MilkOrder.objects.create(
+            customer_id=customer_id,
+            product_type=product_type,
+            quantity=quantity,
+            unit=unit,
+            rate=rate,
+            brand=brand,
+            milk_type=milk_type,
+            pack_size=pack_size,
+            packets=packets,
+            placed_by="CUSTOMER",
+            status="PENDING",
+        )
+
+        return redirect("customer_order_success")
+
+    return render(request, "customer_panel/place_order.html", {
+        "customer_name": request.session.get("customer_name"),
+    })
+
+def customer_my_orders(request):
+    customer_id = request.session.get("customer_id")
+    if not customer_id:
+        return redirect("customer_login")
+
+    orders = MilkOrder.objects.filter(customer_id=customer_id).order_by("-date", "-id")
+    return render(request, "customer_panel/my_orders.html", {"orders": orders})
+
+# ---------- SHOP: PENDING ORDERS + APPROVE/REJECT ----------
+def shop_pending_orders(request):
+    orders = MilkOrder.objects.filter(placed_by="CUSTOMER", status="PENDING").order_by("-date", "-id")
+    # ✅ your template is in templates root => "pending_orders.html"
+    return render(request, "pending_orders.html", {"orders": orders})
+
+def approve_order(request, pk):
+    o = get_object_or_404(MilkOrder, pk=pk)
+    o.status = "APPROVED"
+    o.save()
+    return redirect("pending_orders")
+
+def reject_order(request, pk):
+    o = get_object_or_404(MilkOrder, pk=pk)
+    o.status = "REJECTED"
+    o.save()
+    return redirect("pending_orders")
